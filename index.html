@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Básica</title>
+    <style>
+        /* ====================================
+           ESTILIZACIÓN CSS
+           ==================================== */
+
+        /* Selector de Elemento: Estilos base del cuerpo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f7fa; /* Fondo azul claro */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Selector de ID: Contenedor principal de la calculadora */
+        #calculadora {
+            background-color: #263238; /* Fondo oscuro */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 350px;
+        }
+
+        /* Selector de Elemento: Título */
+        h1 {
+            color: #80cbc4; /* Color verde agua */
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Selector de ID: Pantalla de visualización */
+        #pantalla {
+            background-color: #37474f; /* Fondo de pantalla ligeramente más claro */
+            color: #ffffff; /* Color de texto blanco */
+            font-size: 36px; /* Tamaño de fuente grande */
+            text-align: right;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border: 2px solid #546e7a; /* Borde sutil */
+            border-radius: 8px;
+            min-height: 40px;
+            overflow-x: auto; /* Permite desplazamiento si el número es muy largo */
+            white-space: nowrap;
+        }
+
+        /* Selector de Clase: Contenedor de botones */
+        .botones {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columnas de igual ancho */
+            gap: 10px; /* Espacio entre botones */
+        }
+
+        /* Selector de Elemento: Estilos base para todos los botones */
+        button {
+            padding: 20px 0;
+            font-size: 22px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            color: #ffffff;
+            box-shadow: 0 3px #1c272a; /* Sombra sutil */
+        }
+
+        /* Selector de Clase: Botones Numéricos */
+        .numero {
+            background-color: #455a64; /* Gris oscuro para números */
+        }
+        .numero:hover {
+            background-color: #546e7a;
+            transform: translateY(-1px);
+        }
+
+        /* Selector de Clase: Botones de Operación (+, -, *, /) */
+        .operador {
+            background-color: #00897b; /* Verde turquesa para operadores */
+        }
+        .operador:hover {
+            background-color: #00ac98;
+            transform: translateY(-1px);
+        }
+
+        /* Selector de ID: Botón de Resultado (=) */
+        #resultado {
+            background-color: #ffb300; /* Naranja/Amarillo para Resultado */
+            /* Ocupa la columna 4 y se extiende 2 filas */
+            grid-row: span 2; 
+        }
+        #resultado:hover {
+            background-color: #ffc107;
+            transform: translateY(-1px);
+        }
+
+        /* Selector de ID: Botón de Limpiar (C) */
+        #limpiar {
+            background-color: #e53935; /* Rojo para Limpiar */
+            grid-column: span 2; /* Mantiene 2 columnas */
+        }
+        #limpiar:hover {
+            background-color: #f44336;
+            transform: translateY(-1px);
+        }
+
+        /* Estilo para el botón 0 para que ocupe dos columnas */
+        .cero-doble {
+            grid-column: span 2;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Contenedor Principal con ID -->
+    <div id="calculadora">
+        <h1>Calculadora básica</h1>
+
+        <!-- Pantalla de la Calculadora con ID -->
+        <div id="pantalla">0</div>
+
+        <!-- Contenedor de Botones con Clase -->
+        <div class="botones">
+            
+            <!-- Fila 1: C (doble), /, x -->
+            <button id="limpiar">C</button> 
+            <button class="operador" data-operador="/">/</button>
+            <button class="operador" data-operador="*">x</button>
+
+            <!-- Fila 2: 7, 8, 9, - -->
+            <button class="numero" data-valor="7">7</button>
+            <button class="numero" data-valor="8">8</button>
+            <button class="numero" data-valor="9">9</button>
+            <button class="operador" data-operador="-">-</button>
+
+            <!-- Fila 3: 4, 5, 6, + -->
+            <button class="numero" data-valor="4">4</button>
+            <button class="numero" data-valor="5">5</button>
+            <button class="numero" data-valor="6">6</button>
+            <button class="operador" data-operador="+">+</button>
+
+            <!-- Fila 4: 1, 2, 3, = (Vertical: inicia aquí) -->
+            <button class="numero" data-valor="1">1</button>
+            <button class="numero" data-valor="2">2</button>
+            <button class="numero" data-valor="3">3</button>
+            <button id="resultado">=</button> <!-- Ocupa la columna 4 y se extiende 2 filas -->
+
+            <!-- Fila 5: 0 (doble), ., (columna 4 vacía por el =) -->
+            <button class="numero cero-doble" data-valor="0">0</button> 
+            <button class="numero" data-valor=".">.</button>
+            
+        </div>
+    </div>
+
+    <script>
+        // ====================================
+        // FUNCIONALIDAD JAVASCRIPT
+        // ====================================
+
+        // Variables de estado
+        let pantalla = document.getElementById('pantalla');
+        let operandoActual = ''; // El número que se está ingresando actualmente
+        let operandoAnterior = ''; // El primer número para la operación
+        let operacion = null; // Almacena la operación (+, -, *, /)
+        let esperandoSegundoOperando = false; // Bandera para saber si ya se presionó un operador
+
+        // Función para añadir dígitos a la pantalla
+        function agregarNumero(valor) {
+            // Si ya se presionó un operador, se limpia la pantalla para el nuevo número
+            if (esperandoSegundoOperando) {
+                operandoActual = valor;
+                esperandoSegundoOperando = false;
+            } else {
+                // Previene múltiples puntos decimales
+                if (valor === '.' && operandoActual.includes('.')) return;
+                
+                // Si la pantalla solo muestra '0', lo reemplaza, sino, concatena
+                if (operandoActual === '0' && valor !== '.') {
+                    operandoActual = valor;
+                } else {
+                    operandoActual += valor;
+                }
+            }
+            actualizarPantalla();
+        }
+
+        // Función para seleccionar la operación
+        function seleccionarOperacion(op) {
+            // Si ya hay un número anterior y no se está esperando el segundo, calcula primero el resultado
+            if (operandoAnterior !== '' && !esperandoSegundoOperando) {
+                calcularResultado();
+            }
+
+            // Almacena el número actual como el primer operando y la operación
+            operacion = op;
+            operandoAnterior = operandoActual === '' ? '0' : operandoActual; // Usa 0 si no hay número
+            operandoActual = ''; // Limpia el operando actual para el siguiente número
+            esperandoSegundoOperando = true; // Establece la bandera para el siguiente número
+            actualizarPantalla(); // Opcional: Podríamos mostrar el operando anterior aquí
+        }
+
+        // Función para calcular el resultado final
+        function calcularResultado() {
+            let resultado;
+            const anterior = parseFloat(operandoAnterior);
+            const actual = parseFloat(operandoActual);
+
+            // Verifica si hay números válidos para operar
+            if (isNaN(anterior) || isNaN(actual)) return;
+
+            switch (operacion) {
+                case '+':
+                    resultado = anterior + actual;
+                    break;
+                case '-':
+                    resultado = anterior - actual;
+                    break;
+                case '*':
+                    resultado = anterior * actual;
+                    break;
+                case '/':
+                    // Manejo de división por cero
+                    if (actual === 0) {
+                        resultado = 'Error';
+                    } else {
+                        resultado = anterior / actual;
+                    }
+                    break;
+                default:
+                    return; // No hay operación seleccionada
+            }
+
+            // Actualiza el estado para la siguiente operación
+            operandoActual = resultado.toString();
+            operacion = null;
+            operandoAnterior = '';
+            esperandoSegundoOperando = true; // Prepara la pantalla para un nuevo número
+            actualizarPantalla();
+        }
+
+        // Función para limpiar o reiniciar la calculadora
+        function limpiar() {
+            operandoActual = '0';
+            operandoAnterior = '';
+            operacion = null;
+            esperandoSegundoOperando = false;
+            actualizarPantalla();
+        }
+
+        // Función para mostrar el valor actual en la pantalla
+        function actualizarPantalla() {
+            // Muestra el operando actual, o '0' si está vacío
+            pantalla.textContent = operandoActual === '' ? '0' : operandoActual;
+        }
+
+        // ====================================
+        // ASIGNACIÓN DE EVENTOS
+        // ====================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa la pantalla
+            limpiar(); 
+
+            // Asignar eventos a botones numéricos y punto
+            document.querySelectorAll('.numero').forEach(boton => {
+                boton.addEventListener('click', () => {
+                    agregarNumero(boton.dataset.valor);
+                });
+            });
+
+            // Asignar eventos a botones de operación
+            document.querySelectorAll('.operador').forEach(boton => {
+                boton.addEventListener('click', () => {
+                    seleccionarOperacion(boton.dataset.operador);
+                });
+            });
+
+            // Asignar evento al botón de Resultado (=)
+            document.getElementById('resultado').addEventListener('click', calcularResultado);
+
+            // Asignar evento al botón de Limpiar (C)
+            document.getElementById('limpiar').addEventListener('click', limpiar);
+        });
+
+    </script>
+</body>
+</html>
